@@ -40,9 +40,7 @@ def parse_line_content(line):
 def get_line_tag(line):
     try:
         if '/torrent' in line:
-            #print("LLLLLLINE:"+line+"|")
             regex = re.compile("(</[a-zA-Z]+>)")
-            #print("LOL?:"+regex.search(line).groups()[0])
             return regex.search(line).groups()[0]
         regex = re.compile("(<[a-zA-Z]+>)|")
 
@@ -53,16 +51,13 @@ def get_line_tag(line):
 
 def build_object(data):
     try:
-        #print("Data:" + data.__str__())
         id = data['id']
         title = data['title']
         magnet = data['magnet']
         size = data['size']
         seeders = data['seeders']
         leechers = data['leechers']
-        #quality = data['quality']
         uploaded = data['uploaded']
-        #comments = data.get('comment', [])
         return Torrent(id, title, magnet, size, seeders, leechers, None, uploaded, None)
     except:
         return None
@@ -93,14 +88,11 @@ def parse(filename):
             if len(tag_stack) > 0:
                 while len(tag_stack) > 0:
                     line += tag_stack.pop()
-            #print('line:' + line)
             key = get_line_tag(line)
 
             if key is None or key in banned_tags:
                 continue
-            #print("KKKEY:"+key+"|")
             if '/' in key:
-                #print("AAAAAA-----------------");
                 if key == "</torrent>":
                     object = build_object(data)
                     if object is not None:
@@ -109,14 +101,10 @@ def parse(filename):
                     continue
 
             if key == "<torrent>":
-                #print("resetting data")
                 data = {}
-            #print("KKKKEY:"+key)
             value = parse_line_content(line)
 
             if value is not None:
-                #print("VAALUUUUEE"+value)
-                #print("AÑADIMOS:" + value)
                 if key == "comment":
                     data.setdefault(key[1:-1], []).append(value)
                 else:
@@ -131,6 +119,7 @@ def search(items, title='', minsize=0, maxsize=9999999999999, minseeders=0, maxl
         if title in item.title and minsize <= int(item.size) and minseeders <= int(item.seeders) and maxsize >= int(
                 item.size) and maxleechers >= int(item.leechers):
             result.append(item)
+
     return result
 
 
@@ -167,7 +156,10 @@ def searchTorrent(items):
     if maxleechers == '':
         maxleechers = 9999999999999
     print("BUSCANDO...")
-    filtered_items = search(items, title, minsize, maxsize, minseeders, maxleechers)
+    try:
+        filtered_items = search(items, title, minsize, maxsize, minseeders, maxleechers)
+    except:
+        filtered_items = []
     print("\nRESULTADO\n------")
     if filtered_items is not None:
         for item in filtered_items:
@@ -237,32 +229,6 @@ def menu(items):
     else:
         exit()
 
-
-def test(items):
-    print(items)
-    for element in items:
-        print("elemnt: " + str(element.id))
-
-    for element in search(items, title='a', minseeders=1, maxleechers=0, minsize=99999999):
-        print("elemnt: " + str(element.title))
-
-    print("Borro " + str(len(items)))
-    items = delete(items, id=3211593)
-
-    print("Borrado id distinta" + str(len(items)))
-
-    create(items, 1, 'TITLEE', 'TITLEE', 0, 0, 0, {'up': 0, 'down': 0}, '02-09-1233',
-           {'comments': [{'comment': {'when': '02-98-98', 'what': 'sadadadasd'}}]})
-    print("Item añadido" + str(len(items)))
-
-    print('Busqueda:', str(len(search(items, title='TITLEE'))))
-    print('Antes del update')
-    for item in items:
-        print(item.title)
-    update(items, Torrent(1, 'WORKS', 'sadsad', 213123, 33333, 333, '', '', ''))
-    print('DEspues del update')
-    for item in items:
-        print(item.title)
 
 
 items = parse('rich.xml')
